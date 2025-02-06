@@ -4,7 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import ProfileSetupModal from "./_components/ProfileSetupModal";
-//import ProfileEditor from "./_components/ProfileEditor";
+import ProfileEditor from "./_components/ProfileEditor";
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -23,8 +23,8 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6">
-      {showSetupModal && <ProfileSetupModal />}
-      {/* <ProfileEditor /> */}
+      {/* {showSetupModal && <ProfileSetupModal />} */}
+      <ProfileEditor />
     </div>
   );
 }

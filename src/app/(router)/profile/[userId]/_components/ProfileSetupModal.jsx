@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs'; // Import Clerk's useUser
 
 export default function ProfileSetupModal() {
   const router = useRouter();
-  
+  const { user } = useUser(); // Get authenticated user
+
   const handleSetupProfile = () => {
-    router.push(`/profile/${userId}`);
+    if (!user?.id) {
+      console.error("User ID not found!");
+      return;
+    }
+    
+    router.push(`/profile/${user.id}`); // Use Clerk's user ID
   };
 
   return (
