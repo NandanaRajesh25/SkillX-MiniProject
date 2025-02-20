@@ -1,30 +1,52 @@
-// app/profile/[userId]/page.jsx
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-//import ProfileSetupModal from "./_components/ProfileSetupModal";
-import ProfileEditor from "./_components/ProfileEditor";
+import { fetchUserProfile } from "../../../_utils/GlobalApi";
+import ProfileView from "./_components/ProfileView";
+import ProfileNotFound from "./_components/ProfileNotFound";
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const params = useParams();
-  const userId = params.userId;
-  const [showSetupModal, setShowSetupModal] = useState(true);
+  const userId = params.userId || user?.id;
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user && !userId) {
-      router.push("/");
-    }
-  }, [user, userId, router]);
+    console.log("User ID being checked:", userId); // Debugging Log
 
-  if (!user) return <p>Loading...</p>;
+    if (!isLoaded) return;
+    if (!user || !userId) {
+      console.log("Redirecting to home...");
+      router.push("/"); // Temporarily disable to debug
+      return;
+    }
+
+    // Fetch user profile from Hygraph using userId
+    const getProfile = async () => {
+      setLoading(true);
+      const profile = await fetchUserProfile(userId);
+      console.log("Fetched profile data:", profile); // Debugging Log
+      setProfileData(profile);
+      setLoading(false);
+    };
+
+    getProfile();
+  }, [user, userId, isLoaded]);
+
+  if (!isLoaded || loading) return <p>Loading...</p>;
+
+  console.log("Final Profile Data:", profileData); // Debugging Log
 
   return (
     <div className="p-6">
-      {/* {showSetupModal && <ProfileSetupModal />} */}
-      <ProfileEditor />
+      {profileData ? (
+        <ProfileView profile={profileData} />
+      ) : (
+        <ProfileNotFound userId={userId} />
+      )}
     </div>
   );
 }

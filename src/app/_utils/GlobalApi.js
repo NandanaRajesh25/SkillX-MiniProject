@@ -20,7 +20,7 @@ const UPSERT_USER_PROFILE = gql`
     $language: String!
   ) {
     upsertUserInfo(
-      where: { email: $email }
+      where: { userId: $userId } # 🔹 Ensure userId is used for upsert
       upsert: {
         create: { 
           email: $email,
@@ -39,11 +39,16 @@ const UPSERT_USER_PROFILE = gql`
       }
     ) {
       id
+      userId
       userName
       name
+      email
       skillString
-      userId
       language
+    }
+
+    publishUserInfo(where: { userId: $userId }) { # 🔹 Auto-publish after upsert
+      id
     }
   }
 `;
@@ -100,5 +105,32 @@ export const checkUsernameAvailability = async (userName) => {
   } catch (error) {
     console.error("Error checking username:", error.message);
     return false;
+  }
+};
+
+
+const GET_USER_PROFILE = gql`
+  query GetUserProfile($userId: String!) {
+    userInfos(where: { userId: $userId }) {
+      id
+      userId
+      userName
+      name
+      email
+      skillString
+      language
+    }
+  }
+`;
+
+export const fetchUserProfile = async (userId) => {
+  try {
+    const response = await client.request(GET_USER_PROFILE, { userId });
+
+    console.log("Fetched profile from Hygraph:", response); // Debugging log
+    return response?.userInfos?.length > 0 ? response.userInfos[0] : null;
+  } catch (error) {
+    console.error("Error fetching user profile:", error.message);
+    return null;
   }
 };
