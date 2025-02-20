@@ -3,7 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import ProfileSetupModal from "./_components/ProfileSetupModal";
+//import ProfileSetupModal from "./_components/ProfileSetupModal";
 import ProfileEditor from "./_components/ProfileEditor";
 
 export default function ProfilePage() {

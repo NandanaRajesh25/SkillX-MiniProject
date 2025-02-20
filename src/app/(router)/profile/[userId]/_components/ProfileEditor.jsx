@@ -1,39 +1,67 @@
-"use client";
-
-import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useParams } from "next/navigation"; // Ensure useParams is imported
-import { createUserProfile, syncUserToHygraph } from "../../../../_utils/GlobalApi";
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { syncUserToHygraph, checkUsernameAvailability } from '../../../../_utils/GlobalApi';
 
 export default function ProfileEditor() {
   const { user, isLoaded } = useUser();
-  const { userId } = useParams(); // Get userId from URL
-
   if (!isLoaded) return <p>Loading...</p>;
-  if (!userId) return <p>Error: User ID not found</p>; // Handle missing userId
 
-  const [editing, setEditing] = useState({ username: false, name: false, skills: false });
+  const [editing, setEditing] = useState({ username: false, name: false, skills: false, language: false });
   const [formData, setFormData] = useState({
-    username: user?.username || "",
-    name: "",
-    skills: "",
+    username: user?.username || '',
+    name: '',
+    skills: '',
+    language: 'English'
   });
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+
+    setFormData({
+      username: user.username || '',
+      name: user.fullName || '',
+      skills: '',
+      language: 'English'
+    });
+  }, [user]);
 
   const handleSave = async () => {
     if (typeof window === "undefined") return;
 
+    // Check if username is unique
+    if (editing.username) {
+      const isAvailable = await checkUsernameAvailability(formData.username);
+      if (!isAvailable) {
+        setErrorMessage("This username is already taken. Please choose a different one.");
+        return;
+      }
+    }
+
+    setErrorMessage(""); // Clear any previous errors
+
     const userData = {
-      userId, // Include userId
       username: formData.username,
       email: user?.emailAddresses?.[0]?.emailAddress || "",
       name: formData.name,
       skills: formData.skills,
+      userId: user.id, 
+      language: formData.language,
     };
 
     try {
-      await syncUserToHygraph(user);
-      await createUserProfile(userData);
-      console.log("Profile created successfully");
+      const response = await syncUserToHygraph(userData);
+
+      if (response?.upsertUserInfo) {
+        setFormData({
+          username: response.upsertUserInfo.userName,
+          name: response.upsertUserInfo.name,
+          skills: response.upsertUserInfo.skillString,
+          language: response.upsertUserInfo.language,
+        });
+      }
+
+      console.log("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
     }
@@ -41,11 +69,10 @@ export default function ProfileEditor() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-xl font-semibold mb-4">Editing Profile for User ID: {userId}</h2>
-
       <div className="flex flex-col items-center mb-8">
         <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4" />
         <div className="w-full space-y-4">
+          {/* Username Field */}
           <div className="flex items-center justify-between">
             <label className="font-semibold">Username:</label>
             {editing.username ? (
@@ -61,7 +88,11 @@ export default function ProfileEditor() {
               </div>
             )}
           </div>
+          
+          {/* Show Error Message if Username Exists */}
+          {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
+          {/* Name Field */}
           <div className="flex items-center justify-between">
             <label className="font-semibold">Name:</label>
             {editing.name ? (
@@ -72,12 +103,13 @@ export default function ProfileEditor() {
               />
             ) : (
               <div className="flex items-center">
-                <span>{formData.name || "Add your name"}</span>
+                <span>{formData.name || 'Add your name'}</span>
                 <button onClick={() => setEditing({ ...editing, name: true })} className="ml-2">📝</button>
               </div>
             )}
           </div>
 
+          {/* Skills Field */}
           <div>
             <label className="font-semibold">Skills:</label>
             {editing.skills ? (
@@ -89,17 +121,35 @@ export default function ProfileEditor() {
               />
             ) : (
               <div className="flex items-center">
-                <span>{formData.skills || "Add your skills"}</span>
+                <span>{formData.skills || 'Add your skills'}</span>
                 <button onClick={() => setEditing({ ...editing, skills: true })} className="ml-2">📝</button>
               </div>
             )}
           </div>
 
+          {/* Language Field */}
+          <div>
+            <label className="font-semibold">Language:</label>
+            {editing.language ? (
+              <input
+                value={formData.language}
+                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                className="w-full border p-2 rounded mt-2"
+              />
+            ) : (
+              <div className="flex items-center">
+                <span>{formData.language || 'Set your language'}</span>
+                <button onClick={() => setEditing({ ...editing, language: true })} className="ml-2">📝</button>
+              </div>
+            )}
+          </div>
+
+          {/* Save Button */}
           <button
             onClick={handleSave}
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+            className="w-full p-3 bg-slate-500 text-white py-2 rounded-md hover:bg-slate-600"
           >
-            Save Profile
+            Save
           </button>
         </div>
       </div>
