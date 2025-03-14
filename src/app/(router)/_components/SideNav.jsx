@@ -41,16 +41,16 @@ function SideNav() {
             id: 4,
             name: 'Request',
             icon: BadgeXIcon,
-            path: '/request',
+            path: '/requests',
             auth: true
         },
-        {
-            id: 5,
-            name: 'NewsLetter',
-            icon: Mail,
-            path: '/newsletter',
-            auth: true
-        },
+        // {
+        //     id: 5,
+        //     name: 'NewsLetter',
+        //     icon: Mail,
+        //     path: '/newsletter',
+        //     auth: true
+        // },
     ]
 
     const path = usePathname();

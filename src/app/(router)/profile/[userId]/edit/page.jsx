@@ -23,7 +23,7 @@ export default function EditProfilePage() {
     const getProfile = async () => {
       setLoading(true);
       const profile = await fetchUserProfile(userId);
-      setProfileData(profile); // Save fetched profile data
+      setProfileData(profile);
       setLoading(false);
     };
 

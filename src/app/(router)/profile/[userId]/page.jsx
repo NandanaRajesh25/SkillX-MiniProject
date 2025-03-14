@@ -15,20 +15,19 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("User ID being checked:", userId); // Debugging Log
+    console.log("User ID being checked:", userId);
 
     if (!isLoaded) return;
     if (!user || !userId) {
       console.log("Redirecting to home...");
-      router.push("/"); // Temporarily disable to debug
+      router.push("/"); 
       return;
     }
 
-    // Fetch user profile from Hygraph using userId
     const getProfile = async () => {
       setLoading(true);
       const profile = await fetchUserProfile(userId);
-      console.log("Fetched profile data:", profile); // Debugging Log
+      console.log("Fetched profile data:", profile); 
       setProfileData(profile);
       setLoading(false);
     };
@@ -38,7 +37,7 @@ export default function ProfilePage() {
 
   if (!isLoaded || loading) return <p>Loading...</p>;
 
-  console.log("Final Profile Data:", profileData); // Debugging Log
+  console.log("Final Profile Data:", profileData); 
 
   return (
     <div className="p-6">

@@ -57,7 +57,7 @@ export default function ProfileEditor({ profileData, user, onProfileSaved }) {
     try {
       await syncUserToHygraph(userData);
       console.log("Profile saved successfully!");
-      onProfileSaved(); // Redirect to profile page
+      onProfileSaved();
     } catch (error) {
       console.error("Error saving profile:", error);
     }
@@ -68,35 +68,30 @@ export default function ProfileEditor({ profileData, user, onProfileSaved }) {
       <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
       {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
-      {/* Username Field */}
       <input
         value={formData.username}
         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
         className="border p-2 rounded w-full mb-4"
       />
 
-      {/* Name Field */}
       <input
         value={formData.name}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         className="border p-2 rounded w-full mb-4"
       />
 
-      {/* Skills Field */}
       <textarea
         value={formData.skills}
         onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
         className="border p-2 rounded w-full mb-4"
       />
 
-      {/* Language Field */}
       <input
         value={formData.language}
         onChange={(e) => setFormData({ ...formData, language: e.target.value })}
         className="border p-2 rounded w-full mb-4"
       />
 
-      {/* Save Button */}
       <button onClick={handleSave} className="w-full p-3 bg-blue-500 text-white rounded-md">
         Save
       </button>
