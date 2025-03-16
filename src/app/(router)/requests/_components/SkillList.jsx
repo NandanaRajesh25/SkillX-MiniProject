@@ -18,7 +18,9 @@ export default function SkillList({ skills, userId, onSkillDeleted }) {
     <div>
       <h3 className="text-xl font-semibold mb-2">Your Skill Requirements</h3>
       {skills.length > 0 ? (
-        skills.map((skill) => <SkillCard key={skill.id} skill={skill} onDelete={handleDelete} />)
+        skills.map((skill, index) => (
+          <SkillCard key={skill.id || index} skill={skill} onDelete={handleDelete} />
+        ))
       ) : (
         <p className="text-gray-500">No skill requests added yet.</p>
       )}

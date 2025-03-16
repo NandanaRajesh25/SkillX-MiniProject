@@ -257,3 +257,107 @@ export const deleteSkillRequest = async (userId, skillId) => {
     return false;
   }
 };
+
+
+/** Fetch all users from Hygraph */
+export const fetchUsersFromHygraph = async () => {
+  const query = `
+    query {
+      userInfos {
+        id
+        userName
+        skillString
+        skillRequirements {
+          ... on Skill {
+            id
+            name
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    console.log("🚀 Fetching users from Hygraph...");
+    const response = await client.request(query);
+    console.log("✅ Users fetched successfully:", response);
+    return response?.userInfos || [];
+  } catch (error) {
+    console.error("❌ Error fetching users:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return [];
+  }
+};
+
+
+/** Add a match between users */
+export const addMatch = async (user1, user2, skill1, skill2, score) => {
+  //console.log("🚀 Storing match in Hygraph...");
+  //console.log(`📌 Variables → user1: ${user1}, user2: ${user2}, skill1: ${skill1}, skill2: ${skill2}, score: ${score}`);
+
+  const mutation = gql`
+    mutation CreateMatch($user1: ID!, $user2: ID!, $skill1: String!, $skill2: String!, $score: Float!) {
+      createMatch(data: {
+        user1: { connect: { id: $user1 } }
+        user2: { connect: { id: $user2 } }
+        skill1: $skill1
+        skill2: $skill2
+        score: $score
+      }) {
+        id
+      }
+      publishManyMatches(to: PUBLISHED) {
+        count
+      }
+    }
+  `;
+
+  try {
+    const response = await client.request(mutation, { user1, user2, skill1, skill2, score });
+    console.log("✅ Match stored successfully in Hygraph:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ Error storing match:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+  }
+};
+
+
+const CHECK_EXISTING_MATCH = gql`
+  query CheckExistingMatch($user1: ID!, $user2: ID!, $skill1: String!, $skill2: String!, $score: Float!) {
+    matches(
+      where: {
+        user1: { id: $user1 }
+        user2: { id: $user2 }
+        skill1: $skill1
+        skill2: $skill2
+        score: $score
+      }
+    ) {
+      id
+    }
+  }
+`;
+
+/** Check if a match already exists */
+export const checkExistingMatch = async (user1, user2, skill1, skill2, score) => {
+  try {
+    const response = await client.request(CHECK_EXISTING_MATCH, { user1, user2, skill1, skill2, score });
+    
+    if (response.matches.length > 0) {
+      return true; // ✅ Match exists
+    }
+
+    return false; // ❌ No existing match
+  } catch (error) {
+    console.error("❌ Error checking existing match:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return false;
+  }
+};
