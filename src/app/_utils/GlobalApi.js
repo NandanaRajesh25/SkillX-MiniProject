@@ -305,6 +305,8 @@ export const addMatch = async (user1, user2, skill1, skill2, score) => {
         skill1: $skill1
         skill2: $skill2
         score: $score
+        accept1: false
+        accept2: false
       }) {
         id
       }
@@ -359,5 +361,157 @@ export const checkExistingMatch = async (user1, user2, skill1, skill2, score) =>
       console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
     }
     return false;
+  }
+};
+
+const GET_USER_INFO_ID = gql`
+  query GetUserInfoId($userId: String!) {
+    userInfos(where: { userId: $userId }) {
+      id
+    }
+  }
+`;
+
+export const fetchUserInfoId = async (userId) => {
+  try {
+    const response = await client.request(GET_USER_INFO_ID, { userId });
+    return response.userInfos.length ? response.userInfos[0].id : null;
+  } catch (error) {
+    console.error("❌ Error fetching UserInfo ID:", error.message);
+    return null;
+  }
+};
+
+const FETCH_USER_MATCHES = gql`
+  query FetchUserMatches($userId: ID!) {
+    matches(
+      where: {
+        OR: [
+          { user1: { id: $userId } }
+          { user2: { id: $userId } }
+        ]
+          accept1: false
+          accept2: false
+      }
+    ) {
+      id
+      user1 { id userId userName }
+      user2 { id userId userName }
+      skill1
+      skill2
+      score
+      accept1
+      accept2
+    }
+  }
+`;
+
+export const fetchUserMatches = async (userId) => {
+  if (!userId) {
+    console.error("❌ fetchUserMatches: userId is missing!");
+    return [];
+  }
+
+  try {
+    console.log("🔍 Fetching UserInfo ID for userId:", userId);
+    const userInfoId = await fetchUserInfoId(userId);
+
+    if (!userInfoId) {
+      console.error("❌ No UserInfo ID found for userId:", userId);
+      return [];
+    }
+
+    console.log("✅ Found UserInfo ID:", userInfoId);
+    
+    console.log("📡 Sending query to fetch matches for UserInfo ID:", userInfoId);
+    const response = await client.request(FETCH_USER_MATCHES, { userId: userInfoId });
+
+    console.log("✅ Response from Hygraph:", response);
+    return response.matches || [];
+  } catch (error) {
+    console.error("❌ Error fetching user matches:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return [];
+  }
+};
+
+const UPDATE_MATCH_ACCEPTANCE = gql`
+  mutation UpdateMatchAcceptance($matchId: ID!, $field: MatchUpdateInput!) {
+    updateMatch(where: { id: $matchId }, data: $field) {
+      id
+      accept1
+      accept2
+    }
+    publishMatch(where: { id: $matchId }) {
+      id
+    }
+  }
+`;
+
+export const updateMatchAcceptance = async (matchId, field) => {
+  try {
+    const variables = { matchId, field: { [field]: true } };
+    console.log("📡 Sending request to update match:", variables);
+
+    const response = await client.request(UPDATE_MATCH_ACCEPTANCE, variables);
+    console.log("✅ Match updated:", response);
+    return true;
+  } catch (error) {
+    console.error("❌ Error updating match:", error.message);
+    return false;
+  }
+};
+
+
+const FETCH_HALF_CONFIRMED_MATCHES = gql`
+  query FetchConfirmedMatches($userId: ID!) {
+    matches(
+      where: {
+        OR: [
+          { user1: { id: $userId }, accept2: true, accept1:false }
+          { user2: { id: $userId }, accept1: true, accept2:false }
+        ]
+      }
+    ) {
+      id
+      user1 { id userId userName }
+      user2 { id userId userName }
+      skill1
+      skill2
+      score
+    }
+  }
+`;
+
+export const fetchHalfConfirmedMatches = async (userId) => {
+  if (!userId) {
+    console.error("❌ fetchConfirmedMatches: userId is missing!");
+    return [];
+  }
+
+  try {
+    console.log("🔍 Fetching UserInfo ID for userId:", userId);
+    const userInfoId = await fetchUserInfoId(userId);
+
+    if (!userInfoId) {
+      console.error("❌ No UserInfo ID found for userId:", userId);
+      return [];
+    }
+
+    console.log("✅ Found UserInfo ID:", userInfoId);
+
+    console.log("📡 Sending query to fetch confirmed matches for UserInfo ID:", userInfoId);
+    const response = await client.request(FETCH_HALF_CONFIRMED_MATCHES, { userId: userInfoId });
+
+    console.log("✅ Confirmed matches fetched:", response);
+    return response.matches || [];
+  } catch (error) {
+    console.error("❌ Error fetching confirmed matches:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return [];
   }
 };
