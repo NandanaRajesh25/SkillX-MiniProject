@@ -515,3 +515,270 @@ export const fetchHalfConfirmedMatches = async (userId) => {
     return [];
   }
 };
+
+const COMPLETE_ACCEPT = gql`
+  mutation CompleteAccept($matchId: ID!) {
+    updateMatch(
+      where: { id: $matchId }
+      data: { accept1: true, accept2: true }
+    ) {
+      id
+      accept1
+      accept2
+    }
+    publishMatch(where: { id: $matchId }) {
+      id
+    }
+  }
+`;
+
+export const completeAcceptMatch = async (matchId) => {
+  try {
+    console.log("📡 Sending request to mark match as fully accepted:", matchId);
+    
+    const response = await client.request(COMPLETE_ACCEPT, { matchId });
+    console.log("✅ Match fully accepted:", response);
+    
+    return true;
+  } catch (error) {
+    console.error("❌ Error completing match acceptance:", error.message);
+    return false;
+  }
+};
+
+
+const FETCH_CONFIRMED_LEARNING_MATCHES = gql`
+  query FetchConfirmedLearningMatches($userId: ID!) {
+    matches(
+      where: {
+        OR: [
+          { user1: { id: $userId } }
+          { user2: { id: $userId } }
+        ]
+        accept1: true
+        accept2: true
+      }
+    ) {
+      id
+      user1 { id userId userName }
+      user2 { id userId userName }
+      skill1
+      skill2
+      score
+    }
+  }
+`;
+
+export const fetchConfirmedLearningMatches = async (userId) => {
+  if (!userId) {
+    console.error("❌ fetchConfirmedLearningMatches: userId is missing!");
+    return [];
+  }
+
+  try {
+    console.log("🔍 Fetching UserInfo ID for userId:", userId);
+    const userInfoId = await fetchUserInfoId(userId);
+
+    if (!userInfoId) {
+      console.error("❌ No UserInfo ID found for userId:", userId);
+      return [];
+    }
+
+    console.log("✅ Found UserInfo ID:", userInfoId);
+    console.log("📡 Sending query to fetch confirmed learning matches...");
+    
+    const response = await client.request(FETCH_CONFIRMED_LEARNING_MATCHES, { userId: userInfoId });
+
+    console.log("✅ Confirmed learning matches fetched:", response);
+    return response.matches || [];
+  } catch (error) {
+    console.error("❌ Error fetching confirmed learning matches:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return [];
+  }
+};
+
+
+const CHECK_USER_CHAT = gql`
+  query CheckUserChat($matchId: ID!) {
+    userChats(where: { match: { id: $matchId } }) {
+      id
+    }
+  }
+`;
+
+const CREATE_USER_CHAT = gql`
+  mutation CreateUserChat($matchId: ID!, $user1: ID!, $user2: ID!) {
+    createUserChat(
+      data: { match: { connect: { id: $matchId } }, user1: { connect: { id: $user1 } }, user2: { connect: { id: $user2 } } }
+    ) {
+      id
+    }
+    publishManyUserChats(to: PUBLISHED) {
+      count
+    }
+  }
+`;
+
+export const checkOrCreateUserChat = async (matchId, user1, user2) => {
+  try {
+    console.log("📡 Checking for existing UserChat...");
+    const response = await client.request(CHECK_USER_CHAT, { matchId });
+
+    if (response.userChats.length > 0) {
+      console.log("✅ UserChat already exists:", response.userChats[0].id);
+      return response.userChats[0].id;
+    }
+
+    console.log("🛠 No UserChat found. Creating one...");
+    const createResponse = await client.request(CREATE_USER_CHAT, { matchId, user1, user2 });
+
+    console.log("✅ UserChat created successfully:", createResponse);
+    return createResponse.createUserChat.id;
+  } catch (error) {
+    console.error("❌ Error checking/creating UserChat:", error.message);
+    throw error;
+  }
+};
+
+
+const FETCH_MATCH_DETAILS = gql`
+  query FetchMatch($matchId: ID!) {
+    match(where: { id: $matchId }) {
+      id
+      skill1
+      skill2
+      user1 { id userId userName name }
+      user2 { id userId userName name }
+    }
+  }
+`;
+
+export const fetchMatchDetails = async (matchId) => {
+  try {
+    const response = await client.request(FETCH_MATCH_DETAILS, { matchId });
+    return response.match;
+  } catch (error) {
+    console.error("Error fetching match details:", error);
+    return null;
+  }
+};
+
+const FETCH_CHAT = gql`
+  query FetchChat($matchId: ID!) {
+    userChats(where: { match: { id: $matchId } }) {
+      id
+      messages {
+        ... on Message {  # 👈 Explicitly query Message type
+          content
+          timeStamp
+          sender { id userId userName }
+        }
+      }
+    }
+  }
+`;
+
+export const fetchChat = async (matchId) => {
+  try {
+    console.log("📡 Fetching chat for match ID:", matchId);
+    const response = await client.request(FETCH_CHAT, { matchId });
+
+    if (response.userChats.length === 0) {
+      console.warn("⚠️ No chat found for match ID:", matchId);
+      return null;
+    }
+
+    console.log("✅ Chat fetched successfully:", response.userChats[0]);
+    return response.userChats[0];
+  } catch (error) {
+    console.error("❌ Error fetching chat:", error);
+    return null;
+  }
+};
+
+const GET_USER_CHAT_ID = gql`
+  query GetUserChatId($matchId: ID!) {
+    userChats(where: { match: { id: $matchId } }) {
+      id
+    }
+  }
+`;
+
+const GET_USERINFO_ID = gql`
+  query GetUserInfoId($userId: String!) {
+    userInfos(where: { userId: $userId }) {
+      id
+    }
+  }
+`;
+
+const SEND_MESSAGE = gql`
+  mutation SendMessage($chatId: ID!, $senderId: ID!, $content: String!, $timeStamp: DateTime!) {
+    updateUserChat(
+      where: { id: $chatId }
+      data: { messages: { 
+        create: { 
+          Message: { 
+            data: { 
+              content: $content, 
+              sender: { connect: { id: $senderId } },
+              timeStamp: $timeStamp  
+            } 
+          } 
+        } 
+      } } 
+    ) {
+      id
+    }
+    publishUserChat(where: { id: $chatId }) { 
+      id
+    }
+  }
+`;
+
+export const sendMessage = async (matchId, senderId, content) => {
+  try {
+    console.log("🔍 Fetching UserChat ID for match:", matchId);
+    const chatResponse = await client.request(GET_USER_CHAT_ID, { matchId });
+
+    if (!chatResponse.userChats.length) {
+      console.error("❌ No UserChat found for this match.");
+      return null;
+    }
+
+    const chatId = chatResponse.userChats[0].id;
+    console.log("✅ Found UserChat ID:", chatId);
+
+    // ✅ Fetch Hygraph UserInfo ID (Convert Clerk's `userId` to Hygraph's `id`)
+    console.log("🔍 Fetching Hygraph UserInfo ID for sender:", senderId);
+    const userInfoResponse = await client.request(GET_USERINFO_ID, { userId: senderId });
+
+    if (!userInfoResponse.userInfos.length) {
+      console.error("❌ No Hygraph UserInfo found for sender.");
+      return null;
+    }
+
+    const hygraphSenderId = userInfoResponse.userInfos[0].id;
+    console.log("✅ Found Hygraph senderId:", hygraphSenderId);
+
+    // ✅ Ensure timestamp is in correct format → "YYYY-MM-DDTHH:mm:ssZ"
+    const now = new Date();
+    const timeStamp = now.toISOString().split(".")[0] + "Z"; // Remove milliseconds
+
+    console.log("📡 Sending message:", { chatId, senderId: hygraphSenderId, content, timeStamp });
+
+    const response = await client.request(SEND_MESSAGE, { chatId, senderId: hygraphSenderId, content, timeStamp });
+
+    console.log("✅ Message sent and published successfully:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ Error sending message:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return null;
+  }
+};

@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { useState } from "react";
-import { updateMatchAcceptance } from "@/app/_utils/GlobalApi"; // Import update function
+import { completeAcceptMatch } from "@/app/_utils/GlobalApi"; // Import new function
 
 export default function MatchInboxList({ matches, userId, refreshMatches }) {
   const [loading, setLoading] = useState({}); // Track loading state for each match
 
-  const handleAccept = async (matchId, isUser1) => {
+  const handleAccept = async (matchId) => {
     setLoading((prev) => ({ ...prev, [matchId]: true }));
+    console.log(`🔄 Accepting match: ${matchId}`);
 
-    const field = isUser1 ? "accept1" : "accept2"; // Determine which field to update
-    const success = await updateMatchAcceptance(matchId, field);
+    const success = await completeAcceptMatch(matchId);
 
     if (success) {
-      console.log(`✅ Match ${matchId} updated successfully!`);
-      refreshMatches(); // Refresh the match list after updating
+      console.log(`✅ Match ${matchId} fully accepted!`);
+
+      // ✅ Refresh match list from the API after a slight delay
+      setTimeout(() => {
+        refreshMatches();
+      }, 500);
     } else {
-      console.error(`❌ Failed to update match ${matchId}`);
+      console.error(`❌ Failed to fully accept match ${matchId}`);
     }
 
     setLoading((prev) => ({ ...prev, [matchId]: false }));
@@ -28,9 +32,8 @@ export default function MatchInboxList({ matches, userId, refreshMatches }) {
       ) : (
         <ul className="space-y-4">
           {matches.map((match) => {
-            const isUser1 = match.user1.id === userId;
-            const otherUser = isUser1 ? match.user2 : match.user1;
-            const otherUserId = otherUser.userId; // Use `userId` for correct URL
+            const otherUser = match.user1.userId === userId ? match.user2 : match.user1;
+            const otherUserId = otherUser.userId;
 
             return (
               <li key={match.id} className="p-5 bg-white shadow-md rounded-lg border border-gray-200">
@@ -61,7 +64,7 @@ export default function MatchInboxList({ matches, userId, refreshMatches }) {
                     className={`px-4 py-2 text-white font-medium rounded-md ${
                       loading[match.id] ? "bg-gray-400" : "bg-slate-600 hover:bg-slate-700"
                     } transition duration-300`}
-                    onClick={() => handleAccept(match.id, isUser1)}
+                    onClick={() => handleAccept(match.id)}
                     disabled={loading[match.id]}
                   >
                     {loading[match.id] ? "Accepting..." : "Accept"}

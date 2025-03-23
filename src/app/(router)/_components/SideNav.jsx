@@ -25,9 +25,9 @@ function SideNav() {
         },
         {
             id: 2,
-            name: 'Learning',
+            name: 'Learnings',
             icon: LayoutGrid,
-            path: '/learning',
+            path: '/learnings',
             auth: true
         },
         {

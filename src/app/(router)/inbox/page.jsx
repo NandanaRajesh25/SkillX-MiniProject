@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { fetchHalfConfirmedMatches } from "@/app/_utils/GlobalApi";
-import { useAuth } from "@clerk/nextjs"; // Assuming Clerk is used for auth
-import MatchInboxList from "./_components/MatchInboxList"; // Modular component
+import { useAuth } from "@clerk/nextjs"; 
+import MatchInboxList from "./_components/MatchInboxList"; 
 
 export default function InboxPage() {
-  const { userId } = useAuth(); // Get logged-in user ID
+  const { userId } = useAuth(); 
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
   const [message, setMessage] = useState("Loading connection requests...");
@@ -13,7 +13,7 @@ export default function InboxPage() {
   const loadMatches = async () => {
     if (!userId) {
       console.warn("⚠️ No userId found!");
-      setMessage("User not logged in.");
+      //setMessage("User not logged in.");
       return;
     }
 
@@ -24,10 +24,11 @@ export default function InboxPage() {
       const fetchedMatches = await fetchHalfConfirmedMatches(userId);
       console.log("📡 Connection requests fetched:", fetchedMatches);
 
-      if (!fetchedMatches || fetchedMatches.length === 0) {
+      if (fetchedMatches.length === 0) {
+        setMatches([]); // ✅ Ensure state updates
         setMessage("No connection requests found.");
       } else {
-        setMatches(fetchedMatches);
+        setMatches([...fetchedMatches]); // ✅ Force state update
         setMessage("");
       }
     } catch (error) {
@@ -39,7 +40,9 @@ export default function InboxPage() {
   };
 
   useEffect(() => {
-    loadMatches();
+    if (userId) {
+      loadMatches();
+    }
   }, [userId]);
 
   return (
