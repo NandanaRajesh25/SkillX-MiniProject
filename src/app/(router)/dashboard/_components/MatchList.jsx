@@ -1,16 +1,29 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-import { updateMatchAcceptance } from "@/app/_utils/GlobalApi"; // API function to update match status
+import { useState, useEffect } from "react";
+import { fetchUserInfoId } from "@/app/_utils/GlobalApi"; // Import function
+import { updateMatchAcceptance } from "@/app/_utils/GlobalApi";
 
 export default function MatchList({ matches, userId }) {
-  const [updatingMatchId, setUpdatingMatchId] = useState(null); // Track match being updated
+  const [userInfoId, setUserInfoId] = useState(null);
+  const [updatingMatchId, setUpdatingMatchId] = useState(null);
+
+  useEffect(() => {
+    const getUserInfo = async () => {
+      const id = await fetchUserInfoId(userId);
+      setUserInfoId(id);
+    };
+
+    getUserInfo();
+  }, [userId]);
 
   const handleConnect = async (match) => {
-    setUpdatingMatchId(match.id); // Set loading state for the match
+    if (!userInfoId) return;
 
-    const isUser1 = match.user1.id === userId;
-    const updateField = isUser1 ? "accept1" : "accept2"; // Determine which field to update
+    setUpdatingMatchId(match.id);
+
+    const isUser1 = match.user1.id === userInfoId; // Correct comparison
+    const updateField = isUser1 ? "accept1" : "accept2";
 
     console.log(`🔄 Updating match ${match.id}: Setting ${updateField} to true`);
 
@@ -22,8 +35,10 @@ export default function MatchList({ matches, userId }) {
       console.error(`❌ Failed to update match ${match.id}`);
     }
 
-    setUpdatingMatchId(null); // Reset loading state
+    setUpdatingMatchId(null);
   };
+
+  if (userInfoId === null) return <p>Loading matches...</p>; // Wait until userInfoId is available
 
   return (
     <div className="mt-8">
@@ -34,8 +49,8 @@ export default function MatchList({ matches, userId }) {
       ) : (
         <ul className="space-y-4">
           {matches.map((match) => {
-            const otherUser = match.user1.id === userId ? match.user2 : match.user1;
-            const otherUserId = otherUser.userId; // Use custom userId field
+            const otherUser = match.user1.id === userInfoId ? match.user2 : match.user1;
+            const otherUserId = otherUser.userId;
 
             return (
               <li key={match.id} className="p-5 bg-white shadow-md rounded-lg border border-gray-200">
@@ -44,13 +59,13 @@ export default function MatchList({ matches, userId }) {
                 </h3>
 
                 <p className="text-gray-700 mt-2">
-                  <strong className="text-gray-900">Skill Exchange:</strong> 
-                  <span className="text-slate-500 ml-1">{match.skill1}</span> ↔ 
+                  <strong className="text-gray-900">Skill Exchange:</strong>
+                  <span className="text-slate-500 ml-1">{match.skill1}</span> ↔
                   <span className="text-slate-500 ml-1">{match.skill2}</span>
                 </p>
 
                 <p className="text-gray-700 mt-1">
-                  <strong className="text-gray-900">Match Score:</strong> 
+                  <strong className="text-gray-900">Match Score:</strong>
                   <span className="ml-1 font-medium text-slate-500">{match.score.toFixed(2)}</span>
                 </p>
 
