@@ -26,7 +26,7 @@ export default function Message({ message, userId }) {
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`p-2 rounded-lg max-w-xs ${isUser ? "bg-slate-500 text-white" : "bg-gray-300"}`}>
+      <div className={`p-2 mt-2 rounded-lg max-w-xs ${isUser ? "bg-slate-500 text-white" : "bg-gray-300"}`}>
         <p>{message.content}</p>
         <span className="text-xs text-gray-500 block mt-1">{formattedTime}</span>
       </div>

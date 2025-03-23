@@ -11,7 +11,7 @@ export default function ChatBox({ chat, matchId, userId }) {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        console.log("🔄 Polling for new messages...");
+        //console.log("🔄 Polling for new messages...");
         const updatedChat = await fetchChat(matchId);
 
         if (updatedChat?.messages) {
@@ -19,7 +19,7 @@ export default function ChatBox({ chat, matchId, userId }) {
 
           // ✅ Only update if new messages exist
           if (JSON.stringify(latestMessages) !== JSON.stringify(messages)) {
-            console.log("📩 New messages found! Updating chat...");
+            //console.log("📩 New messages found! Updating chat...");
             setMessages(latestMessages);
           }
         }
@@ -57,7 +57,7 @@ export default function ChatBox({ chat, matchId, userId }) {
       </div>
 
       {/* Chat Input */}
-      <div className="mt-4 flex gap-2">
+      <div className="mt-2 flex gap-2">
         <input
           type="text"
           className="flex-1 p-2 border rounded-md"

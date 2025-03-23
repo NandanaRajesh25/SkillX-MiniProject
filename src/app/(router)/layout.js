@@ -1,19 +1,22 @@
-import React from 'react'
-import SideNav from './_components/SideNav'
-import Header from './_components/Header'
+import React from "react";
+import SideNav from "./_components/SideNav";
+import Header from "./_components/Header";
 
-function layout({children}) {
+function Layout({ children }) {
   return (
-    <div>
-        <div className='sm:w-64 hidden sm:block fixed'>
-            <SideNav/>
-        </div>
-      <div className='sm:ml-64'>
-        <Header/>
-        {children}
+    <div className="flex">
+      {/* Sidebar */}
+      <div className="hidden sm:block sm:w-24 fixed">
+        <SideNav />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 sm:ml-24">
+        <Header />
+        <div className="p-4">{children}</div>
       </div>
     </div>
-  )
+  );
 }
 
-export default layout
+export default Layout;

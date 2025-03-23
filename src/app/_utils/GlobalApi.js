@@ -683,7 +683,7 @@ const FETCH_CHAT = gql`
 
 export const fetchChat = async (matchId) => {
   try {
-    console.log("📡 Fetching chat for match ID:", matchId);
+    //console.log("📡 Fetching chat for match ID:", matchId);
     const response = await client.request(FETCH_CHAT, { matchId });
 
     if (response.userChats.length === 0) {
@@ -691,7 +691,7 @@ export const fetchChat = async (matchId) => {
       return null;
     }
 
-    console.log("✅ Chat fetched successfully:", response.userChats[0]);
+    //console.log("✅ Chat fetched successfully:", response.userChats[0]);
     return response.userChats[0];
   } catch (error) {
     console.error("❌ Error fetching chat:", error);
@@ -780,5 +780,134 @@ export const sendMessage = async (matchId, senderId, content) => {
       console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
     }
     return null;
+  }
+};
+
+const FETCH_FILES = gql`
+  query FetchFiles($chatId: ID!) {
+    userChat(where: { id: $chatId }) {
+      files {
+        ... on File {
+          name
+          description
+          theFile
+        }
+      }
+    }
+  }
+`;
+
+export const fetchFiles = async (chatId) => {
+  try {
+    console.log("📡 Fetching files for chat:", chatId);
+    const response = await client.request(FETCH_FILES, { chatId });
+    console.log("✅ Files fetched successfully:", response);
+    return response.userChat?.files || [];
+  } catch (error) {
+    console.error("❌ Error fetching files:", error.message);
+    if (error.response) {
+      console.error("📡 GraphQL Response:", JSON.stringify(error.response, null, 2));
+    }
+    return [];
+  }
+};
+
+///////
+
+const ATTACH_FILE_TO_CHAT = gql`
+  mutation MyMutation(
+    $chatId: ID!
+    $description: String!
+    $name: String!
+    $theFile: String!
+  ) {
+    updateUserChat(
+      where: { id: $chatId }
+      data: {
+        files: {
+          create: {
+            File: {
+              data: { description: $description, name: $name, theFile: $theFile }
+            }
+          }
+        }
+      }
+    ) {
+      id
+      files {
+        ... on File {
+          id
+          name
+        }
+      }
+    }
+
+    publishManyFilesConnection(
+      where: { name: $name }
+      to: PUBLISHED
+    ) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const uploadToCloudinary = async (theFile) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", theFile);
+    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET); // Set your Cloudinary upload preset
+
+    console.log("📡 Uploading file to Cloudinary...");
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Failed to upload file to Cloudinary");
+    }
+
+    console.log("✅ File uploaded to Cloudinary:", data.secure_url);
+    return data; // Returns { secure_url, public_id, etc. }
+  } catch (error) {
+    console.error("❌ Cloudinary Upload Error:", error);
+    return null;
+  }
+};
+
+export const uploadFileToChat = async (chatId, fileUrl, name, description) => {
+  try {
+    // console.log("📡 Uploading file to Cloudinary...");
+    // const cloudinaryResponse = await uploadToCloudinary(theFile);
+
+    // if (!cloudinaryResponse) {
+    //   console.error("❌ Cloudinary upload failed.");
+    //   return false;
+    // }
+
+    // const fileUrl = cloudinaryResponse.secure_url;
+    // console.log("✅ File uploaded to Cloudinary:", fileUrl);
+
+    console.log("📡 Attaching file to UserChat...");
+    const chatResponse = await client.request(ATTACH_FILE_TO_CHAT, {
+      chatId,
+      description,
+      name,
+      theFile: fileUrl,
+    });
+
+    console.log(chatResponse);
+
+    console.log("✅ File successfully attached to chat:", chatResponse);
+    return true;
+  } catch (error) {
+    console.error("❌ Error attaching file to chat:", error);
+    return false;
   }
 };
