@@ -8,36 +8,37 @@ export default function InboxPage() {
   const { userId } = useAuth(); // Get logged-in user ID
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
-  const [message, setMessage] = useState("Loading confirmed matches...");
+  const [message, setMessage] = useState("Loading connection requests...");
 
-  // ✅ Fetch Matches on Page Load
-  useEffect(() => {
+  const loadMatches = async () => {
     if (!userId) {
       console.warn("⚠️ No userId found!");
       setMessage("User not logged in.");
       return;
     }
 
-    console.log("🔍 Fetching confirmed matches for user:", userId);
+    console.log("🔍 Fetching connection requests for user:", userId);
+    setLoading(true);
 
-    const loadMatches = async () => {
-      try {
-        const fetchedMatches = await fetchHalfConfirmedMatches(userId);
-        console.log("📡 Confirmed matches fetched from Hygraph:", fetchedMatches);
+    try {
+      const fetchedMatches = await fetchHalfConfirmedMatches(userId);
+      console.log("📡 Connection requests fetched:", fetchedMatches);
 
-        if (!fetchedMatches || fetchedMatches.length === 0) {
-          setMessage("No confirmed matches found.");
-        } else {
-          setMatches(fetchedMatches);
-          setMessage("");
-        }
-      } catch (error) {
-        console.error("❌ Error fetching confirmed matches:", error);
-        setMessage("Failed to load matches.");
+      if (!fetchedMatches || fetchedMatches.length === 0) {
+        setMessage("No connection requests found.");
+      } else {
+        setMatches(fetchedMatches);
+        setMessage("");
       }
-      setLoading(false);
-    };
+    } catch (error) {
+      console.error("❌ Error fetching connection requests:", error);
+      setMessage("Failed to load connection requests.");
+    }
 
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadMatches();
   }, [userId]);
 
@@ -47,8 +48,9 @@ export default function InboxPage() {
 
       {message && <p className="mt-4 text-slate-600">{message}</p>}
 
-      {/* ✅ Show Matches if Available */}
-      {!loading && matches.length > 0 && <MatchInboxList matches={matches} userId={userId} />}
+      {!loading && matches.length > 0 && (
+        <MatchInboxList matches={matches} userId={userId} refreshMatches={loadMatches} />
+      )}
     </div>
   );
 }
