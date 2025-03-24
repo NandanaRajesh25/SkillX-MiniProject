@@ -117,6 +117,7 @@ const GET_USER_PROFILE = gql`
     name
     email
     skillString
+    imageUrl
     language
     skillRequirements {
       ... on Skill {
@@ -273,6 +274,7 @@ export const fetchUsersFromHygraph = async () => {
             name
           }
         }
+        imageUrl
       }
     }
   `;
@@ -909,5 +911,37 @@ export const uploadFileToChat = async (chatId, fileUrl, name, description) => {
   } catch (error) {
     console.error("❌ Error attaching file to chat:", error);
     return false;
+  }
+};
+
+const UPDATE_PROFILE_PICTURE = gql`
+  mutation UpdateProfilePicture($userId: String!, $imageUrl: String!) {
+    updateUserInfo(
+      where: { userId: $userId }
+      data: { imageUrl: $imageUrl }
+    ) {
+      id
+      imageUrl
+    }
+    publishUserInfo(where: { userId: $userId }) {
+      id
+    }
+  }
+`;
+
+export const uploadProfilePictureToHygraph = async (userId, imageUrl) => {
+  try {
+    console.log("📡 Updating profile picture in Hygraph...");
+
+    const response = await client.request(UPDATE_PROFILE_PICTURE, {
+      userId,
+      imageUrl,
+    });
+
+    console.log("✅ Profile picture updated in Hygraph:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ Error updating profile picture:", error);
+    return null;
   }
 };

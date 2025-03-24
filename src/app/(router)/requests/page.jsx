@@ -27,13 +27,13 @@ export default function SkillRequestsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 border rounded-md shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Skill Requests</h2>
+      <h2 className="text-2xl font-semibold mb-4">What do you want to learn?</h2>
 
       <button 
         onClick={() => setShowForm(!showForm)} 
         className="mb-4 p-2 bg-slate-500 text-white rounded"
       >
-        {showForm ? "Cancel" : "Add New Requirement"}
+        {showForm ? "Cancel" : "Add skill"}
       </button>
 
       {showForm && <SkillForm onSave={handleAddSkill} />}
