@@ -1,8 +1,8 @@
 "use client";
+
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { fetchUserInfoId } from "@/app/_utils/GlobalApi"; // Import function
-import { updateMatchAcceptance } from "@/app/_utils/GlobalApi";
+import { fetchUserInfoId, updateMatchAcceptance } from "@/app/_utils/GlobalApi";
 
 export default function MatchList({ matches, userId }) {
   const [userInfoId, setUserInfoId] = useState(null);
@@ -13,7 +13,6 @@ export default function MatchList({ matches, userId }) {
       const id = await fetchUserInfoId(userId);
       setUserInfoId(id);
     };
-
     getUserInfo();
   }, [userId]);
 
@@ -22,7 +21,7 @@ export default function MatchList({ matches, userId }) {
 
     setUpdatingMatchId(match.id);
 
-    const isUser1 = match.user1.id === userInfoId; // Correct comparison
+    const isUser1 = match.user1.id === userInfoId;
     const updateField = isUser1 ? "accept1" : "accept2";
 
     console.log(`🔄 Updating match ${match.id}: Setting ${updateField} to true`);
@@ -38,14 +37,13 @@ export default function MatchList({ matches, userId }) {
     setUpdatingMatchId(null);
   };
 
-  if (userInfoId === null) return <p>Loading matches...</p>; // Wait until userInfoId is available
+  if (userInfoId === null) return <p>Loading matches...</p>;
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Possible Matches</h2>
-
+      <h2 className="text-2xl font-semibold text-gray-200 mb-4">Possible Matches</h2>
       {matches.length === 0 ? (
-        <p className="text-gray-500 text-lg">No matches found.</p>
+        <p className="text-gray-600 text-lg">No matches found.</p>
       ) : (
         <ul className="space-y-4">
           {matches.map((match) => {
@@ -53,43 +51,59 @@ export default function MatchList({ matches, userId }) {
             const otherUserId = otherUser.userId;
 
             return (
-              <li key={match.id} className="p-5 bg-white shadow-md rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  <span className="text-slate-600">{otherUser.userName}</span>
-                </h3>
-
-                <p className="text-gray-700 mt-2">
-                  <strong className="text-gray-900">Skill Exchange:</strong>
-                  <span className="text-slate-500 ml-1">{match.skill1}</span> ↔
-                  <span className="text-slate-500 ml-1">{match.skill2}</span>
-                </p>
-
-                <p className="text-gray-700 mt-1">
-                  <strong className="text-gray-900">Match Score:</strong>
-                  <span className="ml-1 font-medium text-slate-500">{match.score.toFixed(2)}</span>
-                </p>
-
-                <div className="mt-4 flex space-x-3">
-                  {/* View Profile Button */}
+              <li key={match.id} className="flex items-center justify-between p-5 bg-[#0b0f19] shadow-md rounded-lg border border-black">
+                {/* Left Section - Match Info */}
+                <div>
                   <Link href={`/profile/${otherUserId}`} passHref>
-                    <button className="px-4 py-2 bg-slate-600 text-white font-medium rounded-md hover:bg-slate-700 transition duration-300">
-                      View Profile
-                    </button>
+                    <h3 className="text-lg font-semibold text-gray-800 cursor-pointer hover:underline">
+                      <span className="text-gray-400">{otherUser.userName}</span>
+                    </h3>
                   </Link>
 
-                  {/* Connect Button */}
-                  <button
-                    className={`px-4 py-2 text-white font-medium rounded-md transition duration-300 ${
-                      updatingMatchId === match.id
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-slate-600 hover:bg-slate-700"
-                    }`}
-                    onClick={() => handleConnect(match)}
-                    disabled={updatingMatchId === match.id}
-                  >
-                    {updatingMatchId === match.id ? "Connecting..." : "Connect"}
-                  </button>
+                  <p className="text-gray-400 mt-2">
+                    <strong className="text-gray-400">Skill Exchange:</strong>
+                    <span className="text-gray-400 ml-1">{match.skill1}</span> ↔
+                    <span className="text-gray-400 ml-1">{match.skill2}</span>
+                  </p>
+                  <p className="text-gray-400 mt-1">
+                    <strong className="text-gray-400">Match Score:</strong>
+                    <span className="ml-1 font-medium text-gray-400">{(match.score * 100).toFixed(2)}%</span>
+                  </p>
+
+                  <div className="mt-4 flex space-x-3">
+                    {/* Connect Button */}
+                    <button
+                      onClick={() => handleConnect(match)}
+                      className="relative flex items-center justify-start min-w-[40px] w-[40px] h-[40px] px-6 py-2 font-semibold text-white bg-[#0b0f19] rounded-full transition-all duration-700 ease-out group hover:w-40 hover:bg-blue-800"
+                    >
+                      {/* Circle stays on the left */}
+                      <div className="absolute left-3 w-[25px] h-[25px] rounded-full transition-all duration-500 ease-out"></div>
+
+                      {/* Text + Arrow (Aligned properly) */}
+                      <span className="flex items-center space-x-2 pl-0 transition-all duration-700 ease-out">
+                        <span className="text-gray-400">Connect</span>
+                        <svg
+                          className="w-[15px] h-[10px] transition-all duration-500 ease-out transform translate-x-0 group-hover:translate-x-1"
+                          viewBox="0 0 13 10"
+                        >
+                          <path d="M1,5 L11,5" stroke="#000000" strokeWidth="2" strokeLinecap="round"></path>
+                          <polyline points="8 1 12 5 8 9" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></polyline>
+                        </svg>
+                      </span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Right Section - Profile Picture (Clickable) */}
+                <Link href={`/profile/${otherUserId}`} passHref>
+                  <div className="ml-4 flex-shrink-0 cursor-pointer">
+                    <img
+                      src={otherUser.imageUrl || "/default-profile.jpg"}
+                      alt={otherUser.userName}
+                      className="w-32 h-32 rounded-full border-4 border-gray-400 shadow-lg hover:scale-105 transition-transform duration-200"
+                    />
+                  </div>
+                </Link>
               </li>
             );
           })}

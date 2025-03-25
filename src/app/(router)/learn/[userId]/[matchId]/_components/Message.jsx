@@ -3,33 +3,32 @@ import { format, parseISO, isValid } from "date-fns";
 export default function Message({ message, userId }) {
   const isUser = message.sender.userId === userId;
 
-  //console.log("📡 Stored timeStamp:", message.timeStamp); // Debugging log
-
-  let formattedTime = "Sending..."; // Default fallback
-
+  let formattedTime = "Sending...";
   try {
     if (typeof message.timeStamp === "string") {
-      const parsedDate = parseISO(message.timeStamp); // Parse if string
+      const parsedDate = parseISO(message.timeStamp);
       if (isValid(parsedDate)) {
-        formattedTime = format(parsedDate, "dd/MM/yyyy p"); // Converts to local time
-      } else {
-        console.error("❌ Invalid parsed date:", parsedDate);
+        formattedTime = format(parsedDate, "dd/MM/yyyy p");
       }
     } else if (message.timeStamp instanceof Date) {
-      formattedTime = format(message.timeStamp, "dd/MM/yyyy p"); // Directly format Date object
-    } else {
-      console.error("❌ Unexpected timeStamp format:", message.timeStamp);
+      formattedTime = format(message.timeStamp, "dd/MM/yyyy p");
     }
   } catch (error) {
     console.error("❌ Error parsing timeStamp:", error.message);
   }
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`p-2 mt-2 rounded-lg max-w-xs ${isUser ? "bg-slate-500 text-white" : "bg-gray-300"}`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} my-2`}>
+      <div
+        className={`relative p-3 max-w-xs rounded-lg shadow-lg transition-all duration-300 ease-in-out ${
+          isUser
+            ? "bg-blue-700 text-white rounded-br-none hover:bg-blue-600"
+            : "bg-gray-700 text-gray-200 rounded-bl-none hover:bg-gray-600"
+        }`}
+      >
         <p>{message.content}</p>
-        <span className="text-xs text-gray-500 block mt-1">{formattedTime}</span>
-      </div>
+        <div className="text-xs text-gray-400 mt-1 text-right">{formattedTime}</div>
+        </div>
     </div>
   );
 }

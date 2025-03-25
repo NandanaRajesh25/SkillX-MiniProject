@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useUser } from "@clerk/nextjs"; // Import useUser hook from Clerk
 import { 
     Home, 
@@ -62,8 +62,8 @@ function SideNav() {
     }, []);
 
     return (
-        <div className="p-5 bg-white shadow-sm border h-screen relative">
-            <hr className="mt-5"></hr>
+        <div className="p-5 bg-[#0b0f19] shadow-md h-screen border-r border-[#1c1f2a] relative">
+            <hr className="mt-5 border-[#1c1f2a]"></hr>
             <div className="mt-6">
                 {menu.map((item) => 
                     item.auth && (
@@ -74,14 +74,14 @@ function SideNav() {
                             onMouseLeave={() => setHoveredItem(null)}
                         >
                             <div 
-                                className={`group flex gap-3 mt-2 p-3 text-[18px] items-center text-gray-500 cursor-pointer hover:bg-slate-300 hover:text-gray-700 rounded-md transition-all ease-in-out duration-200 
-                                ${path.includes(item.path) && "bg-slate-500 text-white"}`}
+                                className={`group flex gap-3 mt-2 p-3 text-[18px] items-center text-gray-400 cursor-pointer rounded-md transition-all ease-in-out duration-300
+                                ${path.includes(item.path) ? "bg-[#1a2333] text-white shadow-lg shadow-blue-900/50" : "hover:bg-[#161b27] hover:text-gray-200 hover:shadow-lg hover:shadow-blue-900/50"}`}
                             >
-                                <item.icon className="group-hover:animate-bounce" />
+                                <item.icon className="group-hover:scale-105 transition-transform" />
 
                                 {/* Mini pop-up tooltip */}
                                 {hoveredItem === item.id && (
-                                    <div className="absolute left-16 bg-gray-800 text-white text-sm px-2 py-1 rounded-md shadow-md">
+                                    <div className="absolute left-16 bg-[#101522] text-white text-sm px-2 py-1 rounded-md shadow-md">
                                         {item.name}
                                     </div>
                                 )}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
-import { checkOrCreateUserChat } from "@/app/_utils/GlobalApi"; // Import function
+import { checkOrCreateUserChat } from "@/app/_utils/GlobalApi";
 
 export default function LearningList({ matches, userId }) {
   const [loading, setLoading] = useState({});
@@ -25,35 +25,60 @@ export default function LearningList({ matches, userId }) {
   return (
     <div className="mt-8">
       {matches.length === 0 ? (
-        <p className="text-gray-500 text-lg">Nothing to learn for now. Add some skills, run some matches, and get started!</p>
+        <p className="text-gray-400 text-lg text-center">
+          Nothing to learn for now. Add some skills and find matches!
+        </p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {matches.map((match) => {
             const otherUser = match.user1.userId === userId ? match.user2 : match.user1;
+            const otherUserId = otherUser.userId;
+            const profilePic = otherUser.imageUrl || "/default-profile.jpg";
 
             return (
-              <li key={match.id} className="p-5 bg-white shadow-md rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  <span className="text-slate-600">{otherUser.userName}</span>
-                </h3>
+              <li
+                key={match.id}
+                className="p-5 bg-black backdrop-blur-lg text-white shadow-lg rounded-lg border border-black flex flex-col items-center text-center transition-all w-full aspect-square"
+              >
+                {/* Profile Picture */}
+                <Link href={`/profile/${otherUserId}`} passHref>
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-white shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer">
+                    <img
+                      src={profilePic}
+                      alt={otherUser.userName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </Link>
 
-                <p className="text-slate-700 mt-2">
-                  <strong className="text-gray-900">Skill Exchange:</strong> 
-                  <span className="text-slate-500 ml-1">{match.skill1}</span> ↔ 
-                  <span className="text-slate-500 ml-1">{match.skill2}</span>
-                </p>
+                {/* Match Details */}
+                <div className="flex-grow mt-3">
+                  <Link href={`/profile/${otherUserId}`} passHref>
+                    <h3 className="text-lg font-semibold text-gray-300 cursor-pointer hover:underline">
+                      {otherUser.userName}
+                    </h3>
+                  </Link>
 
-                <div className="mt-4">
-                  <button
-                    className={`px-4 py-2 text-white font-medium rounded-md ${
-                      loading[match.id] ? "bg-gray-400" : "bg-slate-600 hover:bg-slate-700"
-                    } transition duration-300`}
-                    onClick={() => handleLearnClick(match)}
-                    disabled={loading[match.id]}
-                  >
-                    {loading[match.id] ? "Loading..." : "Learn"}
-                  </button>
+                  <p className="mt-2 text-md text-gray-400">
+                    <strong className="text-gray-400">Skill Exchange:</strong>
+                    <br />
+                    <span className="text-gray-300">{match.skill1}</span> ↔
+                    <span className="text-gray-300">{match.skill2}</span>
+                  </p>
                 </div>
+
+                {/* Learn Button */}
+<button
+  onClick={() => handleLearnClick(match)}
+  disabled={loading[match.id]}
+  className="group flex items-center justify-center gap-3 mt-4 p-3 text-[18px] text-gray-400 cursor-pointer rounded-md transition-all ease-in-out duration-300 bg-[#0b0f19] hover:bg-[#161b27] hover:text-gray-200 hover:shadow-lg hover:shadow-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {/* Text appears on hover */}
+  <span className="hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+    Teach & Learn!
+  </span>
+</button>
+
               </li>
             );
           })}

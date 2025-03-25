@@ -4,14 +4,13 @@ import { syncUserToHygraph, checkUsernameAvailability, uploadToCloudinary, uploa
 
 export default function ProfileEditor({ profileData, user, onProfileSaved }) {
   const router = useRouter();
-
   const [editing, setEditing] = useState({ username: false, name: false, skills: false, language: false });
   const [formData, setFormData] = useState({
     username: profileData?.userName || user?.username || "",
     name: profileData?.name || user?.fullName || "",
     skills: profileData?.skillString || "",
     language: profileData?.language || "English",
-    imageUrl: profileData?.imageUrl || user?.imageUrl || "", // Profile Picture URL
+    imageUrl: profileData?.imageUrl || user?.imageUrl || "",
   });
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,7 +56,7 @@ export default function ProfileEditor({ profileData, user, onProfileSaved }) {
       skills: formData.skills,
       userId: user.id,
       language: formData.language,
-      imageUrl: formData.imageUrl, // Store the profile picture URL
+      imageUrl: formData.imageUrl,
     };
 
     try {
@@ -72,16 +71,16 @@ export default function ProfileEditor({ profileData, user, onProfileSaved }) {
   const handleProfilePictureUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     setUploading(true);
-  
+
     // 1️⃣ Upload to Cloudinary
     const uploadResponse = await uploadToCloudinary(file);
     if (uploadResponse) {
       const newImageUrl = uploadResponse.secure_url;
       setFormData({ ...formData, imageUrl: newImageUrl });
       console.log("✅ Profile picture uploaded to Cloudinary:", newImageUrl);
-  
+
       // 2️⃣ Save to Hygraph
       const hygraphResponse = await uploadProfilePictureToHygraph(user.id, newImageUrl);
       if (hygraphResponse) {
@@ -92,65 +91,76 @@ export default function ProfileEditor({ profileData, user, onProfileSaved }) {
     } else {
       console.error("❌ Profile picture upload failed.");
     }
-  
+
     setUploading(false);
-  };  
+  };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
-      {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="relative w-[350px] bg-black rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 group">
+        
+        {/* Profile Image Section */}
+        <div className="relative">
+          <img
+            src={formData.imageUrl || "/default-profile.jpg"}
+            alt="Profile Picture"
+            className="w-full h-[180px] object-cover opacity-100 transition-opacity duration-500 group-hover:opacity-50"
+          />
+          <label className="absolute bottom-2 right-2 bg-black/60 p-2 text-white text-sm rounded-md cursor-pointer hover:bg-gray-700">
+            Upload
+            <input type="file" onChange={handleProfilePictureUpload} className="hidden" />
+          </label>
+        </div>
 
-      {/* Profile Picture Upload */}
-      <label className="block font-medium text-gray-700 mb-1">Profile Picture</label>
-      <div className="flex items-center gap-4 mb-4">
-        <img
-          src={formData.imageUrl || "/default-profile.png"}
-          alt="Profile"
-          className="w-20 h-20 rounded-full border"
-        />
-        <input type="file" onChange={handleProfilePictureUpload} className="border p-2 rounded-md" />
+        {/* Profile Details Form */}
+        <div className="p-6 text-center">
+          {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+
+          {/* Username Field */}
+          <input
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            className="w-full bg-[#222] text-white text-center p-2 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Username"
+            title="Enter your unique username"
+          />
+
+          {/* Name Field */}
+          <input
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full bg-[#222] text-white text-center p-2 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Full Name"
+            title="Enter your full name"
+          />
+
+          {/* Skills Field */}
+          <textarea
+            value={formData.skills}
+            onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+            className="w-full bg-[#222] text-white text-center p-2 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Skills (e.g., JavaScript, UI/UX Design)"
+            title="List your skills separated by commas"
+          />
+
+          {/* Language Field */}
+          <input
+            value={formData.language}
+            onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+            className="w-full bg-[#222] text-white text-center p-2 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Preferred Language"
+            title="Enter your preferred language"
+          />
+
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            className="w-full mt-4 p-3 text-[18px] bg-[#0b0f19] text-gray-400 cursor-pointer rounded-md transition-all ease-in-out duration-300 hover:bg-[#161b27] hover:text-gray-200 hover:shadow-lg hover:shadow-blue-900/50"
+          >
+            {uploading ? "Uploading..." : "Save"}
+          </button>
+        </div>
       </div>
-
-      {/* Username Field */}
-      <label className="block font-medium text-gray-700 mb-1">Username</label>
-      <input
-        value={formData.username}
-        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-        className="border p-2 rounded w-full mb-4"
-        placeholder="Enter your username"
-      />
-
-      {/* Name Field */}
-      <label className="block font-medium text-gray-700 mb-1">Full Name</label>
-      <input
-        value={formData.name}
-        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-        className="border p-2 rounded w-full mb-4"
-        placeholder="Enter your full name"
-      />
-
-      {/* Skills Field */}
-      <label className="block font-medium text-gray-700 mb-1">Skills</label>
-      <textarea
-        value={formData.skills}
-        onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-        className="border p-2 rounded w-full mb-4"
-        placeholder="List your skills (e.g., JavaScript, Python, UI/UX Design)"
-      />
-
-      {/* Language Field */}
-      <label className="block font-medium text-gray-700 mb-1">Preferred Language</label>
-      <input
-        value={formData.language}
-        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-        className="border p-2 rounded w-full mb-4"
-        placeholder="Enter your preferred language"
-      />
-
-      <button onClick={handleSave} className="w-full p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
-        {uploading ? "Uploading..." : "Save"}
-      </button>
     </div>
   );
 }

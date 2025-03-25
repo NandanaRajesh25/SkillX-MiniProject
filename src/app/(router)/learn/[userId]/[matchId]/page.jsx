@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";  // Importing useParams from next/navigation
+import { useParams } from "next/navigation"; // Importing useParams from next/navigation
 import { fetchMatchDetails, fetchChat, fetchFiles } from "@/app/_utils/GlobalApi";
 import MatchDetails from "./_components/MatchDetails";
 import ChatBox from "./_components/ChatBox";
@@ -8,7 +8,7 @@ import FileUpload from "./_components/FileUpload";
 import FileList from "./_components/FileList";
 
 export default function LearnPage() {
-  const { userId, matchId } = useParams();  // Use useParams to get the parameters from the URL
+  const { userId, matchId } = useParams(); // Use useParams to get the parameters from the URL
 
   const [mounted, setMounted] = useState(false);
   const [match, setMatch] = useState(null);
@@ -18,21 +18,21 @@ export default function LearnPage() {
   const [receivedFiles, setReceivedFiles] = useState([]);
 
   useEffect(() => {
-    setMounted(true);  // Mark component as mounted
+    setMounted(true); // Mark component as mounted
 
     const loadData = async () => {
       try {
         const matchData = await fetchMatchDetails(matchId);
         setMatch(matchData);
-
+    
         const chatData = await fetchChat(matchId);
         setChat(chatData);
-
-        const filesData = await fetchFiles(matchId);
+    
+        const filesData = await fetchFiles(chatData?.id);
         if (filesData) {
-          const loggedUserFiles = filesData.filter(file => file.uploadedBy.userId === userId);
-          const otherUserFiles = filesData.filter(file => file.uploadedBy.userId !== userId);
-
+          const loggedUserFiles = filesData.filter(file => file.sender?.userId === userId);
+          const otherUserFiles = filesData.filter(file => file.sender?.userId !== userId);
+    
           setSentFiles(loggedUserFiles);
           setReceivedFiles(otherUserFiles);
         }
@@ -41,27 +41,35 @@ export default function LearnPage() {
       }
       setLoading(false);
     };
+    
+    
 
     loadData();
   }, [matchId, userId]);
+
+  const refreshFiles = async () => {
+    if (!chat?.id) return;
+    const updatedFiles = await fetchFiles(chat.id);
+    if (updatedFiles) {
+      setSentFiles(updatedFiles.filter(file => file.uploadedBy.userId === userId));
+      setReceivedFiles(updatedFiles.filter(file => file.uploadedBy.userId !== userId));
+    }
+  };
 
   if (loading) return <p className="text-center text-gray-600">Loading...</p>;
   if (!match) return <p className="text-center text-red-600">Match not found!</p>;
 
   return (
     <div className="flex h-screen">
-      <div className="w-1/3 p-6 border-r space-y-6">
+      <div className="w-1/3 p-6 space-y-6">
         <MatchDetails match={match} userId={userId} />
-
-        <FileUpload chatId={chat?.id} matchId={matchId} userId={userId} refreshFiles={() => fetchFiles(matchId)} />
-
         <FileList title="Your Uploaded Files" files={sentFiles} />
         <FileList title="Files Shared With You" files={receivedFiles} />
       </div>
 
-      <div className="w-2/3 p-6 border-r space-y-6">
+      <div className="w-2/3 p-6 space-y-6">
         <ChatBox chat={chat} matchId={matchId} userId={userId} />
-        <FileUpload chatId={chat?.id} matchId={matchId} userId={userId} refreshFiles={() => fetchFiles(matchId)} />
+        <FileUpload chatId={chat?.id} matchId={matchId} userId={userId} refreshFiles={refreshFiles} />
       </div>
     </div>
   );

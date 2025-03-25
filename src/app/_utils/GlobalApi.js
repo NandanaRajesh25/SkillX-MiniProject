@@ -397,8 +397,8 @@ const FETCH_USER_MATCHES = gql`
       }
     ) {
       id
-      user1 { id userId userName }
-      user2 { id userId userName }
+      user1 { id userId name imageUrl userName }
+      user2 { id userId name imageUrl userName }
       skill1
       skill2
       score
@@ -478,8 +478,8 @@ const FETCH_HALF_CONFIRMED_MATCHES = gql`
       }
     ) {
       id
-      user1 { id userId userName }
-      user2 { id userId userName }
+      user1 { id name imageUrl userId userName }
+      user2 { id name imageUrl userId userName }
       skill1
       skill2
       score
@@ -562,8 +562,8 @@ const FETCH_CONFIRMED_LEARNING_MATCHES = gql`
       }
     ) {
       id
-      user1 { id userId userName }
-      user2 { id userId userName }
+      user1 { id userId name imageUrl userName }
+      user2 { id userId name imageUrl userName }
       skill1
       skill2
       score
@@ -793,6 +793,7 @@ const FETCH_FILES = gql`
           name
           description
           theFile
+          sender { id userId userName }
         }
       }
     }
@@ -804,7 +805,7 @@ export const fetchFiles = async (chatId) => {
     console.log("📡 Fetching files for chat:", chatId);
     const response = await client.request(FETCH_FILES, { chatId });
     console.log("✅ Files fetched successfully:", response);
-    return response.userChat?.files || [];
+    return response.userChat?.files;
   } catch (error) {
     console.error("❌ Error fetching files:", error.message);
     if (error.response) {
