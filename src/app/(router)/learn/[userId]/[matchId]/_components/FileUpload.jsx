@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { uploadFileToChat } from "../../../../../_utils/GlobalApi";
+import { uploadFileToChat, fetchUserInfoId } from "../../../../../_utils/GlobalApi";
 
 export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
   const [file, setFile] = useState(null);
@@ -30,6 +30,13 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
     if (!file) return;
     setUploading(true);
 
+    const userInfoId = await fetchUserInfoId(userId);
+    if (!userInfoId) {
+      console.error("❌ UserInfo not found for userId:", userId);
+      setUploading(false);
+      return;
+    }
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = async () => {
@@ -49,8 +56,8 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
       }
 
       console.log("✅ File uploaded to Cloudinary:", data.url);
+      const success = await uploadFileToChat(chatId, data.url, fileName, description, userInfoId);
 
-      const success = await uploadFileToChat(chatId, data.url, fileName, description);
       if (success) {
         console.log("✅ File attached to chat in Hygraph!");
         refreshFiles();
@@ -66,13 +73,13 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
   };
 
   return (
-    <div className="p-5 border border-[#161b27] rounded-lg bg-[#161b27] shadow-md">
+    <div className="p-5 border border-gray-700 rounded-lg bg-[#161b27] shadow-md">
       <h3 className="text-lg font-semibold text-gray-200 mb-3">Upload File</h3>
 
       {/* Drag & Drop Area */}
       <div
         className={`relative flex flex-col items-center justify-center p-6 border-2 rounded-lg transition-all duration-300 ${
-          dragActive ? "border-blue-800 bg-gray-800" : "border-gray-900 bg-gray-900"
+          dragActive ? "border-blue-500 bg-gray-800" : "border-black bg-gray-900"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -97,7 +104,7 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
       <input
         type="text"
         placeholder="File Name"
-        className="mt-3 w-full p-2 border border-gray-800 bg-gray-800 text-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="mt-3 w-full p-2 border border-black bg-gray-800 text-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
         value={fileName}
         onChange={(e) => setFileName(e.target.value)}
       />
@@ -105,7 +112,7 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
       {/* Description Input */}
       <textarea
         placeholder="Description (optional)"
-        className="mt-3 w-full p-2 border border-gray-800 bg-gray-800 text-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+        className="mt-3 w-full p-2 border border-black bg-gray-800 text-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         rows="2"
@@ -113,7 +120,7 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
 
       {/* Upload Button */}
       <button
-        className={`group w-full flex items-center justify-center gap-3 px-4 py-2 text-[18px] text-gray-400 bg-[#0b0f19] rounded-md transition-all ease-in-out duration-300 ${
+        className={`group flex w-full items-center justify-center gap-3 px-4 py-2 text-[18px] text-gray-400 bg-[#0b0f19] rounded-md transition-all ease-in-out duration-300 ${
           uploading
             ? "opacity-50 cursor-not-allowed"
             : "hover:bg-[#161b27] hover:text-gray-200 hover:shadow-lg hover:shadow-blue-900/50"
@@ -126,6 +133,6 @@ export default function FileUpload({ chatId, matchId, userId, refreshFiles }) {
         </span>
       </button>
 
-          </div>
+    </div>
   );
 }

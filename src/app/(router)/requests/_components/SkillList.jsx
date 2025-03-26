@@ -1,4 +1,4 @@
-import { deleteSkillRequest } from "../../../_utils/GlobalApi";
+import { deleteSkillRequirement } from "../../../_utils/GlobalApi";
 import SkillCard from "./SkillCard";
 
 export default function SkillList({ skills, userId, onSkillDeleted }) {
@@ -8,21 +8,20 @@ export default function SkillList({ skills, userId, onSkillDeleted }) {
       return;
     }
 
-    const success = await deleteSkillRequest(userId, skillId);
+    const success = await deleteSkillRequirement(userId, skillId);
     if (success) {
-      onSkillDeleted(skillId); // Update UI
+      onSkillDeleted(skillId);
     }
   };
 
   return (
-    <div>
-      {/* <h3 className="text-xl font-semibold mb-2">Your Skill Requirements</h3> */}
+    <div className="mt-4 space-y-3">
       {skills.length > 0 ? (
-        skills.map((skill, index) => (
-          <SkillCard key={skill.id || index} skill={skill} onDelete={handleDelete} />
+        skills.map((skill) => (
+          <SkillCard key={skill.id} skill={skill} onDelete={handleDelete} />
         ))
       ) : (
-        <p className="text-gray-500">Add some skills to start your learning journey!</p>
+        <p className="text-gray-400 text-center animate-fadeIn">✨ Add some skills to start your learning journey!</p>
       )}
     </div>
   );

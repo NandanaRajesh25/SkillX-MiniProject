@@ -228,25 +228,35 @@ const REMOVE_SKILL_FROM_USERINFO = gql`
 `;
 
 const DELETE_SKILL = gql`
-  mutation DeleteSkillRequest($skillId: ID!) {
-    deleteSkill(where: { id: $skillId }) {
-      id
+  mutation UpdateUserSkillRequirements($userId: String!, $skillId: ID!) {
+  updateUserInfo(
+    where: { userId: $userId }
+    data: { skillRequirements: { delete: { Skill: { id: $skillId } } } }
+  ) {
+    userId
+    skillRequirements {
+      ... on Skill {
+        id
+        name
+      }
     }
   }
+
+  publishUserInfo(where: { userId: $userId }) {
+    id
+  }
+}
 `;
 
-export const deleteSkillRequest = async (userId, skillId) => {
+export const deleteSkillRequirement = async (userId, skillId) => {
   console.log("🚀 Starting deleteSkillRequest...");
   console.log("🔹 Received userId:", userId);
   console.log("🔹 Received skillId:", skillId);
 
   try {
     // Step 1: Remove from UserInfo
-    const removeSkillResponse = await client.request(REMOVE_SKILL_FROM_USERINFO, { userId, skillId });
-    console.log("✅ Skill removed from UserInfo:", removeSkillResponse);
-
     // Step 2: Delete from Skill model
-    const deleteSkillResponse = await client.request(DELETE_SKILL, { skillId });
+    const deleteSkillResponse = await client.request(DELETE_SKILL, { userId, skillId });
     console.log("✅ Skill deleted from Skill model:", deleteSkillResponse);
 
     return true;
@@ -818,46 +828,39 @@ export const fetchFiles = async (chatId) => {
 ///////
 
 const ATTACH_FILE_TO_CHAT = gql`
-  mutation MyMutation(
-    $chatId: ID!
-    $description: String!
-    $name: String!
-    $theFile: String!
-  ) {
-    updateUserChat(
-      where: { id: $chatId }
-      data: {
-        files: {
-          create: {
-            File: {
-              data: { description: $description, name: $name, theFile: $theFile }
-            }
-          }
-        }
-      }
-    ) {
-      id
-      files {
-        ... on File {
-          id
-          name
-        }
-      }
-    }
-
-    publishManyFilesConnection(
-      where: { name: $name }
-      to: PUBLISHED
-    ) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
+   mutation MyMutation(
+     $chatId: ID!
+     $description: String!
+     $name: String!
+     $theFile: String!
+     $senderId: ID!
+   ) {
+     updateUserChat(
+       where: { id: $chatId }
+       data: {
+         files: {
+           create: {
+             File: {
+               data: { description: $description, name: $name, theFile: $theFile, sender: { connect: { id: $senderId } }  }
+             }
+           }
+         }
+       }
+     ) {
+       id
+       files {
+         ... on File {
+           id
+           name
+         }
+       }
+     }
+ 
+     publishUserChat(where: { id: $chatId }) {
+    id
+}
   }
-`;
+ `;
 
 export const uploadToCloudinary = async (theFile) => {
   try {
@@ -884,28 +887,16 @@ export const uploadToCloudinary = async (theFile) => {
   }
 };
 
-export const uploadFileToChat = async (chatId, fileUrl, name, description) => {
+export const uploadFileToChat = async (chatId, fileUrl, name, description, senderId) => {
   try {
-    // console.log("📡 Uploading file to Cloudinary...");
-    // const cloudinaryResponse = await uploadToCloudinary(theFile);
-
-    // if (!cloudinaryResponse) {
-    //   console.error("❌ Cloudinary upload failed.");
-    //   return false;
-    // }
-
-    // const fileUrl = cloudinaryResponse.secure_url;
-    // console.log("✅ File uploaded to Cloudinary:", fileUrl);
-
     console.log("📡 Attaching file to UserChat...");
     const chatResponse = await client.request(ATTACH_FILE_TO_CHAT, {
       chatId,
       description,
       name,
       theFile: fileUrl,
+      senderId,
     });
-
-    console.log(chatResponse);
 
     console.log("✅ File successfully attached to chat:", chatResponse);
     return true;
