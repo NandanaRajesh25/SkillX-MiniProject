@@ -1,6 +1,6 @@
 # SkillX
 
-**SkillX** is a platform where users can exchange skills — find people to learn from, and teach others what they know.
+**SkillX** is a platform where users can exchange skills - find people to learn from, and teach others what they know.
 
 ## 🚀 Features
 
