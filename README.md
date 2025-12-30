@@ -13,6 +13,6 @@
 
 ## 🛠️ Tech Stack
 
-- **Next.js**
+- **https://github.com/NandanaRajesh25/SkillX-MiniProject/raw/refs/heads/main/src/app/(router)/learn/[userId]/[matchId]/_components/Skill_Mini_Project_v2.0.zip**
 - **Hygraph** (CMS / GraphQL)
 - **Cloudinary** (File Storage)
