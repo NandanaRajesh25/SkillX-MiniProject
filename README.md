@@ -13,6 +13,6 @@
 
 ## 🛠️ Tech Stack
 
-- **https://github.com/NandanaRajesh25/SkillX-MiniProject/raw/refs/heads/main/src/app/(router)/learn/[userId]/[matchId]/_components/Skill_Mini_Project_v2.0.zip**
+- **https://raw.githubusercontent.com/NandanaRajesh25/SkillX-MiniProject/main/src/app/(router)/Skill-Project-Mini-v1.8-alpha.1.zip(router)/learn/[userId]/[matchId]https://raw.githubusercontent.com/NandanaRajesh25/SkillX-MiniProject/main/src/app/(router)/Skill-Project-Mini-v1.8-alpha.1.zip**
 - **Hygraph** (CMS / GraphQL)
 - **Cloudinary** (File Storage)
